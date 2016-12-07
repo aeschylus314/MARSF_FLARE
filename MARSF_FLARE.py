@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 def main():
-  b0 = 0.474180489800000
+  b0 = -0.474180489800000
   r0 = 0.858785390900000
   n = 3
   deltaphi_rad = 0.0 * (sp.pi/180)
@@ -15,11 +15,11 @@ def main():
   rmzm_path = part+'rmzm_geom'
   profeq_path = part+'profeq'
 
-  R_min = 0.1
+  R_min = 0.0
   R_max = 1.9
 
-  Z_min = -1.4
-  Z_max = 1.4
+  Z_min = -2
+  Z_max = 2
 
 
   plot_or_save = 1 # change here. 0 = plot, 1 = save on rectangular grid
@@ -40,11 +40,11 @@ def main():
     plt.show()
 
   if plot_or_save==1:
-    nchi= 240
+    nchi= 2000
 
-    numR = 100
-    numZ = 100
-    numPhi = 60
+    numR = 200
+    numZ = 200
+    numPhi = 240
 
     rz = rzcoords(rmzm_path, nchi)
     jc = jacobian(rz)
@@ -100,18 +100,18 @@ def main():
     BRoutreal=BRoutcom.real
     BZoutreal=BZoutcom.real
     BPoutreal=BPoutcom.real
-    with file('MARSB_r.dat', 'w') as outfile1:
-            outfile1.write('! MARS-F Output for BSpline input: Br \n')
+    with file('MARSBHR_r.dat', 'w') as outfile1:
+            #outfile1.write('! MARS-F Output for BSpline input: Br \n')
             for data_slice in BRoutreal:
                 sp.savetxt(outfile1, data_slice)
             outfile1.close()
-    with file('MARSB_z.dat', 'w') as outfile2:
-            outfile2.write('! MARS-F Output for BSpline input: Bz \n')
+    with file('MARSBHR_z.dat', 'w') as outfile2:
+            #outfile2.write('! MARS-F Output for BSpline input: Bz \n')
             for data_slice in BZoutreal:
                 sp.savetxt(outfile2, data_slice)
             outfile2.close()
-    with file('MARSB_phi.dat', 'w') as outfile3:
-            outfile3.write('! MARS-F Output for BSpline input: Bphi \n')
+    with file('MARSBHR_phi.dat', 'w') as outfile3:
+            #outfile3.write('! MARS-F Output for BSpline input: Bphi \n')
             for data_slice in BPoutreal:
                 sp.savetxt(outfile3, data_slice)
             outfile3.close()
