@@ -1,3 +1,14 @@
+# Name: MARSF_FLARE.py
+# Function: Takes MARS-F magnetic field data and exports it as a data file
+#           readable by the splineB module of the FLARE magnetic analysis
+#           and grid generator package. 
+# Background: Based off of the "convert-python.py" script used to export 
+#           MARS-F data on an R-Z grid.
+# Contains: 
+# Subroutines: main(), rzcoords(), bplasma()
+# Author: Ian Waters- iwaters@wisc.edu
+# Author of Original "covert-python.py": David Ryan- dar517@york.ac.uk
+# Github Page: https://github.com/aeschylus314/MARSF_FLARE.py
 import scipy as sp
 from scipy.interpolate import InterpolatedUnivariateSpline
 import scipy.interpolate
