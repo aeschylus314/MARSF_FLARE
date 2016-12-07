@@ -14,23 +14,23 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 import scipy.interpolate
 import matplotlib.pyplot as plt
 
-
+# Main Program
 def main():
-  b0 = -0.474180489800000
-  r0 = 0.858785390900000
-  n = 3
-  deltaphi_rad = 0.0 * (sp.pi/180)
+  b0 = -0.474180489800000 # B_Toroidal at magnetic axis in Tesla
+  r0 = 0.858785390900000 # Radial position of magnetic axis 
+  n = 3 # Toroidal symmetry number
+  deltaphi_rad = 0.0 * (sp.pi/180) # Relative phasing of top and bottom coils desired (only useful for vacuum response)
   part = './' 
   bplas_u_path = part+'bplas_resist_resp_upper' # change here, 'vac' -> 'resist_resp'
   bplas_l_path = part+'bplas_resist_resp_lower' # change here, 'vac' -> 'resist_resp'
   rmzm_path = part+'rmzm_geom'
   profeq_path = part+'profeq'
 
-  R_min = 0.0
-  R_max = 1.9
+  R_min = 0.0 # Minimum radius for grid. Must match layout.dat value for FLARE integration
+  R_max = 1.9 # Maximum radius for grid. Must match layout.dat value for FLARE integration
 
-  Z_min = -2
-  Z_max = 2
+  Z_min = -2 # Minimum height for grid. Must match layout.dat value for FLARE integration
+  Z_max = 2 # Maximum height for grid. Must match layout.dat value for FLARE integration
 
 
   plot_or_save = 1 # change here. 0 = plot, 1 = save on rectangular grid
@@ -51,11 +51,11 @@ def main():
     plt.show()
 
   if plot_or_save==1:
-    nchi= 2000
+    nchi= 2000 # Resolution for sampling from MARSF results. Set to 1000 or higher
 
-    numR = 200
-    numZ = 200
-    numPhi = 240
+    numR = 200 # Grid Resolution in R. Must match layout.dat value for FLARE integration
+    numZ = 200 # Grid Resolution in Z. Must match layout.dat value for FLARE integration
+    numPhi = 240 # Grid Resolution in Phi. Must match layout.dat value for FLARE integration
 
     rz = rzcoords(rmzm_path, nchi)
     jc = jacobian(rz)
@@ -95,6 +95,7 @@ def main():
     BZoutcom = layout
     BPoutcom = layout
     
+# Generates the 3D grids with Bz, Br, Bphi. The sp.exp" generates the toroidal variation. 
     for x in xrange(0, numR):
         for y in xrange(0, numZ):
             for z in xrange(0, numPhi):
@@ -107,10 +108,11 @@ def main():
         for y in xrange(0, numZ):
             for z in xrange(0, numPhi):
                 BPoutcom[x,y,z]=BP_rect[y,x]*sp.exp(-1*1j*z*2*sp.pi/(numPhi*n))
-    
+# Take the real components of the magnetic field vectors
     BRoutreal=BRoutcom.real
     BZoutreal=BZoutcom.real
     BPoutreal=BPoutcom.real
+# Print the 3D grids into FLARE readable format.
     with file('MARSBHR_r.dat', 'w') as outfile1:
             #outfile1.write('! MARS-F Output for BSpline input: Br \n')
             for data_slice in BRoutreal:
