@@ -10,6 +10,7 @@
 # Author of Original "covert-python.py": David Ryan- dar517@york.ac.uk
 # Github Page: https://github.com/aeschylus314/MARSF_FLARE.py
 import scipy as sp
+import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 import scipy.interpolate
 import matplotlib.pyplot as plt
@@ -26,11 +27,11 @@ def main():
   rmzm_path = part+'rmzm_geom'
   profeq_path = part+'profeq'
 
-  R_min = 0.0 # Minimum radius for grid. Must match layout.dat value for FLARE integration
-  R_max = 1.9 # Maximum radius for grid. Must match layout.dat value for FLARE integration
+  R_min = sp.float64(0.0) # Minimum radius for grid. Must match layout.dat value for FLARE integration
+  R_max = sp.float64(1.9) # Maximum radius for grid. Must match layout.dat value for FLARE integration
 
-  Z_min = -2 # Minimum height for grid. Must match layout.dat value for FLARE integration
-  Z_max = 2 # Maximum height for grid. Must match layout.dat value for FLARE integration
+  Z_min = sp.float64(-2) # Minimum height for grid. Must match layout.dat value for FLARE integration
+  Z_max = sp.float64(2) # Maximum height for grid. Must match layout.dat value for FLARE integration
 
 
   plot_or_save = 1 # change here. 0 = plot, 1 = save on rectangular grid
@@ -53,9 +54,9 @@ def main():
   if plot_or_save==1:
     nchi= 2000 # Resolution for sampling from MARSF results. Set to 1000 or higher
 
-    numR = 200 # Grid Resolution in R. Must match layout.dat value for FLARE integration
-    numZ = 200 # Grid Resolution in Z. Must match layout.dat value for FLARE integration
-    numPhi = 240 # Grid Resolution in Phi. Must match layout.dat value for FLARE integration
+    numR = 300 # Grid Resolution in R. Must match layout.dat value for FLARE integration
+    numZ = 300 # Grid Resolution in Z. Must match layout.dat value for FLARE integration
+    numPhi = 361 # Grid Resolution in Phi. Must match layout.dat value for FLARE integration
 
     rz = rzcoords(rmzm_path, nchi)
     jc = jacobian(rz)
@@ -73,10 +74,12 @@ def main():
     BZ1 = BZ
     BP1 = BP
 
-    R_rect = sp.linspace(R_min, R_max, numR)
-    Z_rect = sp.linspace(Z_min, Z_max, numZ)
+    R_rect = sp.linspace(R_min, R_max, numR, endpoint = True)# added endpoint=false
+    Z_rect = sp.linspace(Z_min, Z_max, numZ, endpoint = True)# added endpoint=false 
 
     R_grid, Z_grid = sp.meshgrid(R_rect,Z_rect)
+    print(R_grid)
+    print(Z_grid)
 
     BR_rect = scipy.interpolate.griddata((R1.ravel(), Z1.ravel()), BR1.ravel(), (R_grid, Z_grid), method = 'linear')
     BR_rect = BR_rect.reshape((numZ,numR))
@@ -88,46 +91,52 @@ def main():
     BP_rect = BP_rect.reshape((numZ,numR))
     #sp.savetxt('B_field_rectangular.txt', sp.transpose([R_grid.ravel(), Z_grid.ravel(), BR_rect.real.ravel(), BR_rect.imag.ravel(), BZ_rect.real.ravel(), BZ_rect.imag.ravel(), BP_rect.real.ravel(), BP_rect.imag.ravel()]), fmt='%.12e', header = "File format columns: R Z Re{Br} Im{Br} Re{Bz} Im{Bz} Re{Bp} Im{Bp} \nAn example plotting script is included in mogui_load_BRZ.py. RZ grid info is \n numR = %d, numZ = %d, Rmin = %0.4f, Rmax = %0.4f, Zmin = %0.4f, Zmax = %0.4f"%(numR,numZ, R_min, R_max, Z_min, Z_max))
     # Layout now defines the boxes for the outputs
-    layout = sp.ndarray(shape=(numR, numZ, numPhi), dtype=complex)
-    print(layout[0,0,0])
-    print(BR_rect[0,0])
+    layout = sp.ndarray(shape=(numR, numZ, numPhi), dtype='complex64')
+    #print(BR_rect)
     BRoutcom = layout
     BZoutcom = layout
     BPoutcom = layout
-    
+    #coordtest = sp.ndarray(shape=(numR, numZ, numPhi), dtype=float)
+
 # Generates the 3D grids with Bz, Br, Bphi. The sp.exp" generates the toroidal variation. 
     for x in xrange(0, numR):
         for y in xrange(0, numZ):
             for z in xrange(0, numPhi):
-                BRoutcom[x,y,z]=BR_rect[y,x]*sp.exp(-1*1j*z*2*sp.pi/(numPhi*n))
+                BRoutcom[x,y,z]=BR_rect[y,x]*sp.exp(-1*n*1j*z*2*sp.pi/((numPhi-1)*n))#-i*n*phi, phi=2pi*z/((nphi-1)*n)
+                if x==1 and y==1:
+                    print(z*2*sp.pi/((numPhi-1)*n))
     for x in xrange(0, numR):
         for y in xrange(0, numZ):
             for z in xrange(0, numPhi):
-                BZoutcom[x,y,z]=BZ_rect[y,x]*sp.exp(-1*1j*z*2*sp.pi/(numPhi*n))
+                BZoutcom[x,y,z]=BZ_rect[y,x]*sp.exp(-1*n*1j*z*2*sp.pi/((numPhi-1)*n))
     for x in xrange(0, numR):
         for y in xrange(0, numZ):
             for z in xrange(0, numPhi):
-                BPoutcom[x,y,z]=BP_rect[y,x]*sp.exp(-1*1j*z*2*sp.pi/(numPhi*n))
+                BPoutcom[x,y,z]=BP_rect[y,x]*sp.exp(-1*1j*n*z*2*sp.pi/((numPhi-1)*n))
 # Take the real components of the magnetic field vectors
     BRoutreal=BRoutcom.real
     BZoutreal=BZoutcom.real
     BPoutreal=BPoutcom.real
 # Print the 3D grids into FLARE readable format.
-    with file('MARSBHR_r.dat', 'w') as outfile1:
+    with file('MARSBHR33_r.dat', 'w') as outfile1:
             #outfile1.write('! MARS-F Output for BSpline input: Br \n')
             for data_slice in BRoutreal:
                 sp.savetxt(outfile1, data_slice)
             outfile1.close()
-    with file('MARSBHR_z.dat', 'w') as outfile2:
+    with file('MARSBHR33_z.dat', 'w') as outfile2:
             #outfile2.write('! MARS-F Output for BSpline input: Bz \n')
             for data_slice in BZoutreal:
                 sp.savetxt(outfile2, data_slice)
             outfile2.close()
-    with file('MARSBHR_phi.dat', 'w') as outfile3:
+    with file('MARSBHR33_phi.dat', 'w') as outfile3:
             #outfile3.write('! MARS-F Output for BSpline input: Bphi \n')
             for data_slice in BPoutreal:
                 sp.savetxt(outfile3, data_slice)
             outfile3.close()
+   # with file ('coordtest.dat','w') as outfile4:
+    #        for data_slice in coordtest:
+     #           sp.savetxt(outfile4, data_slice)
+      #      outfile4.close()
 
 class rzcoords():
 
